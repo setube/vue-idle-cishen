@@ -25,9 +25,11 @@ const DIFFICULTY_NAMES = {
 // 根据任务ID生成任务类型
 export const getQuestTypeByTaskId = taskId => {
   const tankTypes = ['upgrade', 'stage', 'summon']
-  const typeIndex = (taskId - 1) % 3
-  if (typeIndex < 100) {
-    return tankTypes.filter(type => type !== 'summon')[typeIndex]
+  let typeIndex = (taskId - 1) % 3
+  if (taskId < 100) {
+    const availableTypes = tankTypes.filter(type => type !== 'summon')
+    typeIndex = (taskId - 1) % availableTypes.length
+    return availableTypes[typeIndex]
   }
   return tankTypes[typeIndex]
 }

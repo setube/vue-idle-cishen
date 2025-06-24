@@ -203,10 +203,6 @@
     return heroSkillCooldowns.value[heroId] && heroSkillCooldowns.value[heroId][skillId] > 0
   }
 
-  const getHeroSkillCooldownTime = (heroId, skillId) => {
-    return Math.ceil((heroSkillCooldowns.value[heroId]?.[skillId] || 0) / 1000)
-  }
-
   // 角色相关方法
   const getHeroAvatar = heroId => {
     return heroDatabase[heroId]?.avatar || '👤'
@@ -228,12 +224,12 @@
       gameStore.character.attributes.attack.level
     )
     // 暴击计算
-    const criticalChance = gameStore.character.attributes.critical.level * 0.01
+    const criticalChance = (gameStore.character.attributes.critical.level - 1) * 0.01
     const isCritical = Math.random() < criticalChance
     let damage = baseAttack
     if (isCritical) {
-      const criticalMultiplier = gameStore.character.attributes.criticalDamage.level * 0.01
-      damage *= criticalMultiplier / 100
+      const criticalMultiplier = 1.2 + (gameStore.character.attributes.criticalDamage.level - 1) * 0.01
+      damage *= criticalMultiplier
     }
     return { damage: Math.floor(damage), isCritical }
   }
@@ -291,7 +287,7 @@
 
     heroSkillCooldowns.value[hero.id][skillObject.id] = skillObject.cooldown * 1000
 
-    const success = await skillEffectHandler.handleSkillEffect(skillObject, hero.level, {
+    const success = skillEffectHandler.handleSkillEffect(skillObject, hero.level, {
       attackerType: 'hero',
       heroId: hero.id
     })
@@ -351,10 +347,11 @@
   const enemyDefeated = () => {
     const enemy = gameStore.battle.enemy
     gameStore.resources.gold += enemy.goldReward
+    gameStore.resources.experience += enemy.expReward
     const { difficulty, chapter, stage, enemy: enemyNum } = gameStore.stages.currentStage
     skillEffectHandler.addBattleLog({
       type: 'victory',
-      message: `击败了 ${enemy.name}！获得 ${formatLargeNumber(enemy.goldReward)} 金币`,
+      message: `击败了 ${enemy.name}！获得 ${formatLargeNumber(enemy.goldReward)} 金币和 ${enemy.expReward} 经验`,
       timestamp: Date.now()
     })
     gameStore.character.currentHealth = gameStore.character.maxHealth
@@ -456,16 +453,14 @@
   // 战斗逻辑
   const processBattle = () => {
     if (!gameStore.battle.isInBattle) return
-
     updateSkillCooldowns()
-
     skillEffectHandler.updateEffects()
-
     const now = Date.now()
-    const attackSpeed = gameStore.character.attributes.attackSpeed.unlocked
-      ? gameStore.character.attributes.attackSpeed.level * 100
-      : 1000
-
+    const baseAttackSpeed = 1000 // 基础攻击间隔1000ms
+    const attackSpeedBonus = gameStore.character.attributes.attackSpeed.unlocked
+      ? (gameStore.character.attributes.attackSpeed.level - 1) * 0.001 // 每级+0.1%
+      : 0
+    const attackSpeed = baseAttackSpeed / (1 + attackSpeedBonus)
     if (autoSkillEnabled.value) {
       const equippedSkills = gameStore.skills?.equippedSkills || []
       for (const skillId of equippedSkills) {
@@ -476,11 +471,9 @@
         }
       }
     }
-
     const activeHeroesInFormation = formationPositions.value
       .map(pos => gameStore.heroes.ownedHeroes.find(h => h.id === pos.heroId))
       .filter(Boolean)
-
     for (const hero of activeHeroesInFormation) {
       const unlockedHeroSkills = getHeroUnlockedSkills(hero)
       for (const skill of unlockedHeroSkills) {
@@ -489,26 +482,56 @@
         }
       }
     }
-
     if (now - gameStore.battle.lastAttackTime >= attackSpeed) {
-      const { damage, isCritical } = getCharacterAttack()
-      gameStore.battle.enemy.currentHealth -= damage
-      const logMessage = isCritical
-        ? `你造成了 ${formatLargeNumber(damage)} 暴击伤害！`
-        : `你造成了 ${formatLargeNumber(damage)} 伤害`
+      const performAttack = (attackCount, isMultiShot = false, isTripleShot = false) => {
+        for (let i = 0; i < attackCount; i++) {
+          if (gameStore.battle.enemy.currentHealth > 0) {
+            const { damage, isCritical } = getCharacterAttack()
+            gameStore.battle.enemy.currentHealth -= damage
+            let logMessage = isCritical
+              ? `你造成了 ${formatLargeNumber(damage)} 暴击伤害！`
+              : `你造成了 ${formatLargeNumber(damage)} 伤害`
 
-      skillEffectHandler.addBattleLog({
-        type: 'player-attack',
-        message: logMessage,
-        timestamp: now
-      })
+            if (isMultiShot) logMessage += ' (连射)'
+            if (isTripleShot) logMessage += ' (三连射)'
+
+            skillEffectHandler.addBattleLog({
+              type: 'player-attack',
+              message: logMessage,
+              timestamp: now
+            })
+          }
+        }
+      }
+      // 默认进行一次攻击
+      performAttack(1)
+      // 检查是否触发三连射
+      const tripleShotChance = (gameStore.character.attributes.tripleShot.level - 1) * 0.01
+      if (gameStore.character.attributes.tripleShot.unlocked && Math.random() < tripleShotChance) {
+        performAttack(2, false, true) // 额外攻击两次
+        skillEffectHandler.addBattleLog({
+          type: 'skill-use',
+          message: '触发了三连射！',
+          timestamp: now
+        })
+      }
+      // 检查是否触发连射
+      const multiShotChance = (gameStore.character.attributes.multiShot.level - 1) * 0.01
+      if (gameStore.character.attributes.multiShot.unlocked && Math.random() < multiShotChance) {
+        performAttack(1, true, false) // 额外攻击一次
+        skillEffectHandler.addBattleLog({
+          type: 'skill-use',
+          message: '触发了连射！',
+          timestamp: now
+        })
+      }
       gameStore.battle.lastAttackTime = now
       if (gameStore.battle.enemy.currentHealth <= 0) {
         enemyDefeated()
         return
       }
     }
-    if (now - gameStore.battle.lastEnemyAttackTime >= 2000) {
+    if (now - gameStore.battle.lastEnemyAttackTime >= 1000) {
       const damage = gameStore.battle.enemy.attack
       gameStore.character.currentHealth -= damage
       skillEffectHandler.addBattleLog({

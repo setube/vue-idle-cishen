@@ -1,50 +1,52 @@
 <template>
   <div class="feature-panel">
     <div class="feature-buttons">
-      <n-button
-        v-for="(item, index) in menuList"
-        :key="index"
-        :type="item.type"
-        size="large"
-        class="menu-btn"
-        @click="goUrl(item.url)"
-      >
-        {{ route.path !== item.url ? item.name : '首页' }}
-      </n-button>
+      <n-icon size="30" v-for="(item, index) in menuList" :key="index" class="menu-btn" @click="goUrl(item.url)">
+        <component :is="route.path !== item.url ? item.icon : HomeOutline" />
+      </n-icon>
     </div>
   </div>
 </template>
 
 <script setup>
   import { useRoute, useRouter } from 'vue-router'
+  import {
+    PersonOutline,
+    ReceiptOutline,
+    PawOutline,
+    ShirtOutline,
+    StorefrontOutline,
+    HomeOutline,
+    SettingsOutline
+  } from '@vicons/ionicons5'
+
   const route = useRoute()
   const router = useRouter()
 
   const menuList = [
     {
-      name: '角色',
-      url: '/heroes',
-      type: 'primary'
+      icon: PersonOutline,
+      url: '/heroes'
     },
     {
-      name: '技能',
-      url: '/skills',
-      type: 'error'
+      icon: ReceiptOutline,
+      url: '/skills'
     },
     {
-      name: '宠物',
-      url: '/pets',
-      type: 'success'
+      icon: PawOutline,
+      url: '/pets'
     },
     {
-      name: '装备',
-      url: '/equipment',
-      type: 'warning'
+      icon: ShirtOutline,
+      url: '/equipment'
     },
     {
-      name: '召唤',
-      url: '/summon',
-      type: 'info'
+      icon: StorefrontOutline,
+      url: '/summon'
+    },
+    {
+      icon: SettingsOutline,
+      url: '/setting'
     }
   ]
 
@@ -55,7 +57,7 @@
 
 <style scoped>
   .menu-btn {
-    margin-right: 5px;
+    width: 15%;
   }
 
   .feature-panel {

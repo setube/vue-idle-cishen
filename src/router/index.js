@@ -5,6 +5,7 @@ import SkillPage from '../views/SkillPage.vue'
 import Equipment from '../views/EquipmentPage.vue'
 import Home from '../views/HomePage.vue'
 import Summon from '../views/SummonPage.vue'
+import Setting from '../views/SettingPage.vue'
 
 const routes = [
   {
@@ -36,6 +37,11 @@ const routes = [
     path: '/equipment',
     name: 'Equipment',
     component: Equipment
+  },
+  {
+    path: '/setting',
+    name: 'Setting',
+    component: Setting
   }
 ]
 

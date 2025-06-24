@@ -107,14 +107,14 @@
       case 'healthRecover':
         return formatLargeNumber(calculateAttributeValue(attr.baseValue, attr.level))
       case 'attackSpeed':
-        return `${attr.level * 10}%`
+        return `${attr.level * 0.1}%`
       case 'critical':
         return `${attr.level - 1}%`
       case 'criticalDamage':
         return `${attr.level + 119}%`
       case 'multiShot':
       case 'tripleShot':
-        return `${attr.level}次`
+        return `${attr.level}%`
       default:
         return attr.level.toString()
     }
@@ -146,7 +146,7 @@
     if (key === 'attack' && !attr.attackSpeed.unlocked && attr.attack.level >= 200) {
       attr.attackSpeed.unlocked = true
     }
-    if (key === 'attackSpeed' && !attr.multiShot.unlocked && attr.attackSpeed.level >= 1000) {
+    if (key === 'attackSpeed' && !attr.multiShot.unlocked && attr.attackSpeed.level >= 200) {
       attr.multiShot.unlocked = true
     }
     if (key === 'multiShot' && !attr.multiShot.unlocked && attr.multiShot.level >= 1000) {
