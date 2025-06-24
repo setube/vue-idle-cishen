@@ -56,18 +56,6 @@
 
   const gameStore = useGameStore()
 
-  // 属性名称映射
-  const attributeNames = {
-    attack: '攻击',
-    health: '生命',
-    healthRecover: '生命恢复',
-    attackSpeed: '攻击速度',
-    critical: '暴击',
-    criticalDamage: '暴击伤害',
-    multiShot: '连射',
-    tripleShot: '三连射'
-  }
-
   // 计算总战斗力
   const totalCombatPower = computed(() => {
     const attrs = gameStore.character.attributes
@@ -88,6 +76,17 @@
   })
 
   const getAttributeName = key => {
+    // 属性名称映射
+    const attributeNames = {
+      attack: '攻击',
+      health: '生命',
+      healthRecover: '生命恢复',
+      attackSpeed: '攻击速度',
+      critical: '暴击',
+      criticalDamage: '暴击伤害',
+      multiShot: '连射',
+      tripleShot: '三连射'
+    }
     return attributeNames[key] || key
   }
 
@@ -141,42 +140,29 @@
   }
 
   const upgradeAttribute = key => {
-    const attr = gameStore.character.attributes[key]
-    const cost = getUpgradeCost(key, attr)
-    if (!canUpgrade(key, attr)) return
+    const attr = gameStore.character.attributes
+    const cost = getUpgradeCost(key, attr[key])
     // 检查解锁条件
-    if (key === 'attackSpeed' && !attr.unlocked) {
-      if (gameStore.character.attributes.attack.level >= 200) {
-        attr.unlocked = true
-      } else {
-        return
-      }
+    if (key === 'attack' && !attr.attackSpeed.unlocked && attr.attack.level >= 200) {
+      attr.attackSpeed.unlocked = true
     }
-    if (key === 'multiShot' && !attr.unlocked) {
-      if (gameStore.character.attributes.attackSpeed.level >= 1000) {
-        attr.unlocked = true
-      } else {
-        return
-      }
+    if (key === 'attackSpeed' && !attr.multiShot.unlocked && attr.attackSpeed.level >= 1000) {
+      attr.multiShot.unlocked = true
     }
-    if (key === 'tripleShot' && !attr.unlocked) {
-      if (gameStore.character.attributes.multiShot.level >= 1000) {
-        attr.unlocked = true
-      } else {
-        return
-      }
+    if (key === 'multiShot' && !attr.multiShot.unlocked && attr.multiShot.level >= 1000) {
+      attr.multiShot.unlocked = true
     }
     // 执行升级
     gameStore.resources.gold -= cost
-    attr.level += 1
+    attr[key].level += 1
     // 更新任务进度
     updateQuestProgress(gameStore, {
       type: 'attribute_upgrade',
-      attribute: attr
+      attribute: attr[key]
     })
     // 更新角色最大生命值
     if (key === 'health') {
-      const newMaxHealth = calculateAttributeValue(attr.baseValue, attr.level)
+      const newMaxHealth = calculateAttributeValue(attr[key].baseValue, attr[key].level)
       const healthRatio = gameStore.character.currentHealth / gameStore.character.maxHealth
       gameStore.character.maxHealth = newMaxHealth
       gameStore.character.currentHealth = Math.floor(newMaxHealth * healthRatio)

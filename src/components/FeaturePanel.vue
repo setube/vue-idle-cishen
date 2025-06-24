@@ -1,29 +1,72 @@
 <template>
   <div class="feature-panel">
-    <h3 class="panel-title">功能入口</h3>
     <div class="feature-buttons">
-      <n-button type="primary" size="large" class="feature-btn" @click="openFeature('giant-screen')">巨幕</n-button>
-      <n-button type="info" size="large" class="feature-btn" @click="openFeature('competition')">竞赛</n-button>
-      <n-button type="warning" size="large" class="feature-btn" @click="openFeature('activity')">活动</n-button>
+      <n-button
+        v-for="(item, index) in menuList"
+        :key="index"
+        :type="item.type"
+        size="large"
+        class="menu-btn"
+        @click="goUrl(item.url)"
+      >
+        {{ route.path !== item.url ? item.name : '首页' }}
+      </n-button>
     </div>
   </div>
 </template>
 
 <script setup>
-  import { NButton } from 'naive-ui'
+  import { useRoute, useRouter } from 'vue-router'
+  const route = useRoute()
+  const router = useRouter()
 
-  const openFeature = featureType => {
-    console.log(`打开功能: ${featureType}`)
-    // 这里可以添加路由跳转或弹窗逻辑
+  const menuList = [
+    {
+      name: '角色',
+      url: '/heroes',
+      type: 'primary'
+    },
+    {
+      name: '技能',
+      url: '/skills',
+      type: 'error'
+    },
+    {
+      name: '宠物',
+      url: '/pets',
+      type: 'success'
+    },
+    {
+      name: '装备',
+      url: '/equipment',
+      type: 'warning'
+    },
+    {
+      name: '召唤',
+      url: '/summon',
+      type: 'info'
+    }
+  ]
+
+  const goUrl = url => {
+    router.push(route.path !== url ? url : '/')
   }
 </script>
 
 <style scoped>
+  .menu-btn {
+    margin-right: 5px;
+  }
+
   .feature-panel {
     background: #f8f9fa;
-    border-radius: 8px;
-    padding: 16px;
+    padding: 16px 0;
     border: 2px solid #e9ecef;
+    width: 100%;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
   }
 
   .panel-title {
@@ -34,8 +77,7 @@
 
   .feature-buttons {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
+    justify-content: center;
   }
 
   .feature-btn {

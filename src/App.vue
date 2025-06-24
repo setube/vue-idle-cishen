@@ -2,16 +2,18 @@
   <div class="game-container">
     <router-view />
   </div>
+  <FeaturePanel />
 </template>
 
-<script setup></script>
+<script setup>
+  import FeaturePanel from './components/FeaturePanel.vue'
+</script>
 
 <style scoped>
   .game-container {
     max-width: 800px;
     margin: 0 auto;
     padding: 16px;
-    background: #ffffff;
-    min-height: 100vh;
+    margin-bottom: 75px;
   }
 </style>
