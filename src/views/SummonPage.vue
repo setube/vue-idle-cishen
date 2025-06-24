@@ -126,15 +126,20 @@
   }
 
   const performSummon = (type, count) => {
+    console.log(type, count)
     const results = performSummonByType(gameStore, type, count)
     summonResults.value = results
     showResultModal.value = true
 
     // 更新任务进度
-    updateQuestProgress(gameStore, {
-      type: 'summon',
-      summonType: type
-    })
+    updateQuestProgress(
+      gameStore,
+      {
+        type: 'summon',
+        summonType: type
+      },
+      count
+    )
   }
 
   const singleSummon = type => {
