@@ -305,8 +305,16 @@
   // 根据关卡生成敌人
   const generateStageEnemy = () => {
     const { difficulty, chapter, stage, enemy } = gameStore.stages.currentStage
+
+    // 防御性检查，防止关卡数据损坏
+    if (!difficulty || !chapter || !stage || !enemy) {
+      // 重置到安全状态以避免游戏崩溃
+      gameStore.stages.currentStage = { difficulty: 'normal', chapter: 1, stage: 1, enemy: 1 }
+    }
+
+    const currentStageData = gameStore.stages.currentStage
+
     // 计算敌人等级
-    let baseLevel = 1
     const difficultyMultipliers = {
       normal: 1,
       hard: 2,
@@ -315,11 +323,16 @@
       nightmare: 16,
       hell: 32
     }
-    baseLevel = (chapter - 1) * 10 * stage
-    baseLevel *= difficultyMultipliers[difficulty]
+    const multiplier = difficultyMultipliers[currentStageData.difficulty] || 1
+    let baseLevel = (currentStageData.chapter - 1) * 10 + currentStageData.stage
+    baseLevel *= multiplier
     // Boss额外加成
-    const isBoss = enemy === 5
-    const level = isBoss ? Math.floor(baseLevel * 1.5) : baseLevel
+    const isBoss = currentStageData.enemy === 5
+    let level = isBoss ? Math.floor(baseLevel * 1.5) : Math.floor(baseLevel)
+    // 确保等级至少为1，避免0属性
+    if (level < 1) {
+      level = 1
+    }
     // 敌人名称
     const normalEnemies = ['哥布林', '兽人', '骷髅', '巨魔']
     const bossEnemies = ['哥布林王', '兽人酋长', '骷髅领主', '巨魔王', '恶魔领主']
